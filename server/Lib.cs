@@ -30,6 +30,15 @@ public static partial class Module
             this.x = x;
             this.y = y;
         }
+
+        public float SqrMagnitude => x * x + y * y;
+        public float Magnitude => MathF.Sqrt(SqrMagnitude);
+        public DbVector2 Normalized => this / Magnitude;
+
+        public static DbVector2 operator +(DbVector2 a, DbVector2 b) => new DbVector2(a.x + b.x, a.y + b.y);
+        public static DbVector2 operator -(DbVector2 a, DbVector2 b) => new DbVector2(a.x - b.x, a.y - b.y);
+        public static DbVector2 operator *(DbVector2 a, float b) => new DbVector2(a.x * b, a.y * b);
+        public static DbVector2 operator /(DbVector2 a, float b) => new DbVector2(a.x / b, a.y / b);
     }
 
     [Table(Name = "entity", Public = true)]
@@ -82,6 +91,11 @@ public static partial class Module
         ctx.Db.spawn_food_timer.Insert(new SpawnFoodTimer
         {
             scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(500))
+        });
+
+        ctx.Db.move_all_players_timer.Insert(new MoveAllPlayersTimer
+        {
+            scheduled_at = new ScheduleAt.Interval(TimeSpan.FromMilliseconds(50))
         });
     }
 
@@ -155,9 +169,112 @@ public static partial class Module
         }
     }
 
+
     public static float Range(this Random rng, float min, float max) => rng.NextSingle() * (max - min) + min;
 
     public static uint Range(this Random rng, uint min, uint max) => (uint)rng.NextInt64(min, max);
+
+    [Reducer]
+    public static void UpdatePlayerInput(ReducerContext ctx, DbVector2 direction)
+    {
+        var player = ctx.Db.player.identity.Find(ctx.Sender) ?? throw new Exception("Player not found");
+        foreach (var c in ctx.Db.circle.player_id.Filter(player.player_id))
+        {
+            var circle = c;
+            circle.direction = direction.Normalized;
+            circle.speed = Math.Clamp(direction.Magnitude, 0f, 1f);
+            ctx.Db.circle.entity_id.Update(circle);
+        }
+    }
+
+    [Table(Name = "move_all_players_timer", Scheduled = nameof(MoveAllPlayers), ScheduledAt = nameof(scheduled_at))]
+    public partial struct MoveAllPlayersTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong scheduled_id;
+        public ScheduleAt scheduled_at;
+    }
+
+    const uint START_PLAYER_SPEED = 10;
+
+    public static float MassToMaxMoveSpeed(uint mass) => 2f * START_PLAYER_SPEED / (1f + MathF.Sqrt((float)mass / START_PLAYER_MASS));
+
+const float MINIMUM_SAFE_MASS_RATIO = 0.85f;
+
+    public static bool IsOverlapping(Entity a, Entity b)
+    {
+        var dx = a.position.x - b.position.x;
+        var dy = a.position.y - b.position.y;
+        var distance_sq = dx * dx + dy * dy;
+
+        var radius_a = MassToRadius(a.mass);
+        var radius_b = MassToRadius(b.mass);
+
+        // If the distance between the two circle centers is less than the
+        // maximum radius, then the center of the smaller circle is inside
+        // the larger circle. This gives some leeway for the circles to overlap
+        // before being eaten.
+        var max_radius = radius_a > radius_b ? radius_a : radius_b;
+        return distance_sq <= max_radius * max_radius;
+    }
+
+    [Reducer]
+    public static void MoveAllPlayers(ReducerContext ctx, MoveAllPlayersTimer timer)
+    {
+        var world_size = (ctx.Db.config.id.Find(0) ?? throw new Exception("Config not found")).world_size;
+
+        // Handle player input
+        foreach (var circle in ctx.Db.circle.Iter())
+        {
+            var check_entity = ctx.Db.entity.entity_id.Find(circle.entity_id);
+            if (check_entity == null)
+            {
+                // This can happen if the circle has been eaten by another circle.
+                continue;
+            }
+            var circle_entity = check_entity.Value;
+            var circle_radius = MassToRadius(circle_entity.mass);
+            var direction = circle.direction * circle.speed;
+            var new_pos = circle_entity.position + direction * MassToMaxMoveSpeed(circle_entity.mass);
+            circle_entity.position.x = Math.Clamp(new_pos.x, circle_radius, world_size - circle_radius);
+            circle_entity.position.y = Math.Clamp(new_pos.y, circle_radius, world_size - circle_radius);
+
+            // Check collisions
+            foreach (var entity in ctx.Db.entity.Iter())
+            {
+                if (entity.entity_id == circle_entity.entity_id)
+                {
+                    continue;
+                }
+                if (IsOverlapping(circle_entity, entity))
+                {
+                    // Check to see if we're overlapping with food
+                    if (ctx.Db.food.entity_id.Find(entity.entity_id).HasValue)
+                    {
+                        ctx.Db.entity.entity_id.Delete(entity.entity_id);
+                        ctx.Db.food.entity_id.Delete(entity.entity_id);
+                        circle_entity.mass += entity.mass;
+                    }
+
+                    // Check to see if we're overlapping with another circle owned by another player
+                    var other_circle = ctx.Db.circle.entity_id.Find(entity.entity_id);
+                    if (other_circle.HasValue &&
+                        other_circle.Value.player_id != circle.player_id)
+                    {
+                        var mass_ratio = (float)entity.mass / circle_entity.mass;
+                        if (mass_ratio < MINIMUM_SAFE_MASS_RATIO)
+                        {
+                            ctx.Db.entity.entity_id.Delete(entity.entity_id);
+                            ctx.Db.circle.entity_id.Delete(entity.entity_id);
+                            circle_entity.mass += entity.mass;
+                        }
+                    }
+                }
+            }
+            ctx.Db.entity.entity_id.Update(circle_entity);
+        }
+    }
+
 
 
     const uint START_PLAYER_MASS = 15;
@@ -206,4 +323,6 @@ public static partial class Module
         });
         return entity;
     }
+
+    
 }

@@ -63,10 +63,10 @@ public class GameManager : MonoBehaviour
 
         // If the user has a SpacetimeDB auth token stored in the Unity PlayerPrefs,
         // we can use it to authenticate the connection.
-        if (AuthToken.Token != "")
-        {
-            builder = builder.WithToken(AuthToken.Token);
-        }
+        // if (AuthToken.Token != "")
+        // {
+        //     builder = builder.WithToken(AuthToken.Token);
+        // }
 
         // Building the connection will establish a connection to the SpacetimeDB
         // server.
@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
         SetupArena(worldSize);
 
         // Call enter game with the player name 3Blave
-        ctx.Reducers.EnterGame("3Blave");
+        ctx.Reducers.EnterGame("KrakenWood");
     }
     public static bool IsConnected()
     {
