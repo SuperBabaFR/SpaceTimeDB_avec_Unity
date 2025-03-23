@@ -7,14 +7,17 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    const string SERVER_URL = "http://127.0.0.1:3000";
+    // const string SERVER_URL = "http://127.0.0.1:3000";
+    const string SERVER_URL = "http://34.148.201.241:3000";
     const string MODULE_NAME = "blackholio";
 
     public static event Action OnConnected;
     public static event Action OnSubscriptionApplied;
+    public static event Action OnLocalPlayerDeath;
 
     public float borderThickness = 2;
     public Material borderMaterial;
+    public Menu MenuUI;
 
     public static GameManager Instance { get; private set; }
     public static Identity LocalIdentity { get; private set; }
@@ -22,6 +25,7 @@ public class GameManager : MonoBehaviour
 
     public static Dictionary<uint, EntityController> Entities = new Dictionary<uint, EntityController>();
     public static Dictionary<uint, PlayerController> Players = new Dictionary<uint, PlayerController>();
+
 
     private void SetupArena(float worldSize)
     {
@@ -51,6 +55,12 @@ public class GameManager : MonoBehaviour
     {
         Instance = this;
         Application.targetFrameRate = 60;
+
+        // Abonnement à la mort du joueur ptdr
+        OnLocalPlayerDeath += () =>
+        {
+            MenuUI.ShowCanvas();
+        };
 
         // In order to build a connection to SpacetimeDB we need to register
         // our callbacks and specify a SpacetimeDB server URI and module name.
@@ -119,8 +129,7 @@ public class GameManager : MonoBehaviour
         var worldSize = Conn.Db.Config.Id.Find(0).WorldSize;
         SetupArena(worldSize);
 
-        // Call enter game with the player name 3Blave
-        ctx.Reducers.EnterGame("KrakenWood");
+        MenuUI.ShowCanvas();
     }
     public static bool IsConnected()
     {
@@ -174,6 +183,12 @@ public class GameManager : MonoBehaviour
         {
             Destroy(playerController.gameObject);
         }
+
+    }
+
+    public static void NotifyLocalPlayerDeath()
+    {
+        OnLocalPlayerDeath?.Invoke();
     }
 
     private static PlayerController GetOrCreatePlayer(uint playerId)

@@ -91,6 +91,7 @@ public class PlayerController : MonoBehaviour
         if (OwnedCircles.Remove(deletedCircle) && IsLocalPlayer && OwnedCircles.Count == 0)
         {
             // DeathScreen.Instance.SetVisible(true);
+            GameManager.NotifyLocalPlayerDeath();
         }
     }
 

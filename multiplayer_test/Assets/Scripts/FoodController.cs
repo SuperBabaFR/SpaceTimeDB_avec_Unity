@@ -17,7 +17,8 @@ public class FoodController : EntityController
 
     public void Spawn(Food food)
     {
-        base.Spawn(food.EntityId);
+        // BOHJOUR
+		base.Spawn(food.EntityId);
 		SetColor(ColorPalette[EntityId % ColorPalette.Length]);
     }
 }

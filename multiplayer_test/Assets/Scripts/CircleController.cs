@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SpacetimeDB;
 using SpacetimeDB.Types;
+using TMPro;
 using UnityEngine;
 
 public class CircleController : EntityController
@@ -27,6 +28,8 @@ public class CircleController : EntityController
 		(Color)new Color32(2, 28, 146, 255),
 	};
 
+    [SerializeField] private TMP_Text playerNameText;
+
     private PlayerController Owner;
 
     public void Spawn(Circle circle, PlayerController owner)
@@ -35,7 +38,7 @@ public class CircleController : EntityController
 		SetColor(ColorPalette[circle.PlayerId % ColorPalette.Length]);
 
         this.Owner = owner;
-        GetComponentInChildren<TMPro.TextMeshProUGUI>().text = owner.Username;
+        playerNameText.text = owner.Username;
     }
 
 	public override void OnDelete(EventContext context)

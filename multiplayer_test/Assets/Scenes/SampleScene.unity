@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b12261e2be0ab347bd3a53cefd49162, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CirclePrefab: {fileID: 2185027857066688982, guid: bf34b18012686154fbbf25c2b6839ab1, type: 3}
+  CirclePrefab: {fileID: 572020744185634416, guid: bf34b18012686154fbbf25c2b6839ab1, type: 3}
   FoodPrefab: {fileID: 7613020367352600730, guid: 95ee5d0794dd5404ebba977f0ebfc9e9, type: 3}
   PlayerPrefab: {fileID: 239965923910471065, guid: a2cd1b4879040944cba01b20ad8a4d0b, type: 3}
 --- !u!1001 &4554768810459337381
