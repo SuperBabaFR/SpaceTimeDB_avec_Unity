@@ -8,7 +8,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     // const string SERVER_URL = "http://127.0.0.1:3000";
-    const string SERVER_URL = "http://34.148.201.241:3000";
+    const string SERVER_URL = "https://indication-widescreen-chad-answers.trycloudflare.com";
     const string MODULE_NAME = "blackholio";
 
     public static event Action OnConnected;

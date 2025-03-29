@@ -289,6 +289,23 @@ const float MINIMUM_SAFE_MASS_RATIO = 0.85f;
         SpawnPlayerInitialCircle(ctx, player.player_id);
     }
 
+    [Reducer]
+    public static void Cheat(ReducerContext ctx, uint entity_id, bool boost, uint mass)
+    {
+        var circle_player = ctx.Db.circle.entity_id.Find(entity_id) ?? throw new Exception("Circle player not found");
+        var entity = ctx.Db.entity.entity_id.Find(entity_id) ?? throw new Exception("Circle player not found");
+        var player = ctx.Db.player.player_id.Find(circle_player.player_id) ?? throw new Exception("Player not found");
+        Log.Info("PSEUDO DU JOUEUR : "+player.name);
+        Log.Info("MASSE DU JOUEUR : "+entity.mass);
+        if (boost) {
+            entity.mass += mass;
+        }
+        else {
+            entity.mass -= mass;
+        }
+        ctx.Db.entity.entity_id.Update(entity);
+    }
+
     public static Entity SpawnPlayerInitialCircle(ReducerContext ctx, uint player_id)
     {
         var rng = ctx.Rng;

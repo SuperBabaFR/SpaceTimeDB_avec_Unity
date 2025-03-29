@@ -30,18 +30,23 @@ public class CameraController : MonoBehaviour
             };
         } else {
             transform.position = arenaCenterTransform;
-            Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, 200, Time.deltaTime * 2);
+            Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, 200, Time.deltaTime * 6f);
             return;
         }
 
 		float targetCameraSize = CalculateCameraSize(PlayerController.Local);
-		Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, targetCameraSize, Time.deltaTime * 2);
+        Camera.main.orthographicSize = Mathf.MoveTowards(Camera.main.orthographicSize, targetCameraSize, 100f * Time.deltaTime);
+
+		// Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, targetCameraSize, Time.deltaTime * 6f);
 	}
 
-	private float CalculateCameraSize(PlayerController player)
-	{
-		return 50f + //Base size
-            Mathf.Min(50, player.TotalMass() / 3) + //Increase camera size with mass
-            Mathf.Min(player.NumberOfOwnedCircles - 1, 1) * 30; //Zoom out when player splits
-	}
+    private float CalculateCameraSize(PlayerController player)
+    {
+        float mass = player.TotalMass();
+        float zoom = mass / 100; // plus agressif
+        return 40f + zoom;
+    }
+
+
+
 }

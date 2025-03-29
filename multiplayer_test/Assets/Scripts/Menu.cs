@@ -9,15 +9,12 @@ public class Menu : MonoBehaviour
     public GameObject Canvas;
     public TMP_InputField input_pseudo;
 
+    public static event Action OnLocalPlayerGameEntered;
+
+
     void Start()
     {
         Canvas.SetActive(false);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public void ShowCanvas() {
@@ -37,6 +34,7 @@ public class Menu : MonoBehaviour
         Canvas.SetActive(false);
 
         GameManager.Conn.Reducers.EnterGame(pseudo);
+        OnLocalPlayerGameEntered?.Invoke();
     }
 
 }

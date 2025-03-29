@@ -80,6 +80,9 @@ public class PlayerController : MonoBehaviour
         OwnedCircles.Clear();
     }
 
+    public IReadOnlyList<CircleController> OwnedCirclesReadOnly => OwnedCircles;
+
+
     public void OnCircleSpawned(CircleController circle)
     {
         OwnedCircles.Add(circle);
@@ -122,20 +125,13 @@ public class PlayerController : MonoBehaviour
         return totalPos / totalMass;
     }
 
-    private void OnGUI()
-    {
-        if (!IsLocalPlayer || !GameManager.IsConnected())
-        {
-            return;
-        }
-
-        GUI.Label(new Rect(0, 0, 100, 50), $"Total Mass: {TotalMass()}");
-    }
-
     //Automated testing members
     private bool testInputEnabled;
     private Vector2 testInput;
 
     public void SetTestInput(Vector2 input) => testInput = input;
     public void EnableTestInput() => testInputEnabled = true;
+
+    public string GetMassLabel() => $"Total Mass: {TotalMass()}";
+
 }
